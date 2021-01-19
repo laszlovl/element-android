@@ -2,7 +2,7 @@ Changes in Element 1.0.15 (2020-XX-XX)
 ===================================================
 
 Features ✨:
- -
+ - Message forwarding (#1557)
 
 Improvements 🙌:
  -

@@ -283,7 +283,8 @@ class MessageActionsViewModel @AssistedInject constructor(@Assisted
                     }
 
                     if (canShare(msgType)) {
-                        add(EventSharedAction.Share(timelineEvent.eventId, messageContent!!))
+                        add(EventSharedAction.Forward(timelineEvent.eventId, messageContent!!))
+                        add(EventSharedAction.Share(timelineEvent.eventId, messageContent))
                     }
 
                     if (canSave(msgType) && messageContent is MessageWithAttachmentContent) {

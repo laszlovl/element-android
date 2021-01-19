@@ -105,12 +105,14 @@ import im.vector.app.core.utils.colorizeMatchingText
 import im.vector.app.core.utils.copyToClipboard
 import im.vector.app.core.utils.createJSonViewerStyleProvider
 import im.vector.app.core.utils.createUIHandler
+import im.vector.app.core.utils.forwardMedia
 import im.vector.app.core.utils.isValidUrl
 import im.vector.app.core.utils.openUrlInExternalBrowser
 import im.vector.app.core.utils.registerForPermissionsResult
 import im.vector.app.core.utils.saveMedia
 import im.vector.app.core.utils.shareMedia
 import im.vector.app.core.utils.shareText
+import im.vector.app.core.utils.forwardText
 import im.vector.app.core.utils.toast
 import im.vector.app.databinding.DialogReportContentBinding
 import im.vector.app.databinding.FragmentRoomDetailBinding
@@ -1622,6 +1624,23 @@ class RoomDetailFragment @Inject constructor(
         navigator.openRoomMemberProfile(userId = userId, roomId = roomDetailArgs.roomId, context = requireActivity())
     }
 
+    private fun onForwardActionClicked(action: EventSharedAction.Forward) {
+        if (action.messageContent is MessageTextContent) {
+            forwardText(requireContext(), action.messageContent.body)
+        } else if (action.messageContent is MessageWithAttachmentContent) {
+            session.fileService().downloadFile(
+                messageContent = action.messageContent,
+                callback = object : MatrixCallback<File> {
+                    override fun onSuccess(data: File) {
+                        if (isAdded) {
+                            forwardMedia(requireContext(), data, getMimeTypeFromUri(requireContext(), data.toUri()))
+                        }
+                    }
+                }
+            )
+        }
+    }
+
     override fun onMemberNameClicked(informationData: MessageInformationData) {
         insertUserDisplayNameInTextEditor(informationData.senderId)
     }
@@ -1755,6 +1774,9 @@ class RoomDetailFragment @Inject constructor(
             }
             is EventSharedAction.Redact                     -> {
                 promptConfirmationToRedactEvent(action)
+            }
+            is EventSharedAction.Forward                    -> {
+                onForwardActionClicked(action)
             }
             is EventSharedAction.Share                      -> {
                 onShareActionClicked(action)

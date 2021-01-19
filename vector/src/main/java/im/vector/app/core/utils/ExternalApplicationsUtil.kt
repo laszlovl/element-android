@@ -41,6 +41,7 @@ import androidx.core.content.getSystemService
 import im.vector.app.BuildConfig
 import im.vector.app.R
 import im.vector.app.features.notifications.NotificationUtils
+import im.vector.app.features.share.IncomingShareActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -290,32 +291,56 @@ fun openMedia(activity: Activity, savedMediaPath: String, mimeType: String) {
 }
 
 fun shareMedia(context: Context, file: File, mediaMimeType: String?) {
-    var mediaUri: Uri? = null
-    try {
-        mediaUri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".fileProvider", file)
-    } catch (e: Exception) {
-        Timber.e(e, "onMediaAction Selected File cannot be shared")
-    }
+    val sendIntent = Intent()
 
-    if (null != mediaUri) {
-        val sendIntent = Intent()
-        sendIntent.action = Intent.ACTION_SEND
-        // Grant temporary read permission to the content URI
-        sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        sendIntent.type = mediaMimeType
-        sendIntent.putExtra(Intent.EXTRA_STREAM, mediaUri)
-
+    if (putMediaIntent(context, sendIntent, file, mediaMimeType)) {
         sendShareIntent(context, sendIntent)
     }
 }
 
+fun forwardMedia(context: Context, file: File, mediaMimeType: String?) {
+    val sendIntent = Intent(context, IncomingShareActivity::class.java)
+
+    if (putMediaIntent(context, sendIntent, file, mediaMimeType)) {
+        context.startActivity(sendIntent);
+    }
+}
+
+fun putMediaIntent(context: Context, intent: Intent, file: File, mediaMimeType: String?): Boolean {
+    var mediaUri: Uri
+    try {
+        mediaUri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".fileProvider", file)
+    } catch (e: Exception) {
+        Timber.e(e, "onMediaAction Selected File cannot be shared")
+        return false
+    }
+
+    intent.action = Intent.ACTION_SEND
+    // Grant temporary read permission to the content URI
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    intent.type = mediaMimeType
+    intent.putExtra(Intent.EXTRA_STREAM, mediaUri)
+    return true
+}
+
 fun shareText(context: Context, text: String) {
     val sendIntent = Intent()
-    sendIntent.action = Intent.ACTION_SEND
-    sendIntent.type = "text/plain"
-    sendIntent.putExtra(Intent.EXTRA_TEXT, text)
+    putTextIntent(sendIntent, text);
 
     sendShareIntent(context, sendIntent)
+}
+
+fun forwardText(context: Context, text: String) {
+    val sendIntent = Intent(context, IncomingShareActivity::class.java)
+    putTextIntent(sendIntent, text);
+
+    context.startActivity(sendIntent);
+}
+
+fun putTextIntent(intent: Intent, text: String) {
+    intent.action = Intent.ACTION_SEND
+    intent.type = "text/plain"
+    intent.putExtra(Intent.EXTRA_TEXT, text)
 }
 
 private fun sendShareIntent(context: Context, intent: Intent) {

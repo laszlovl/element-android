@@ -42,6 +42,9 @@ sealed class EventSharedAction(@StringRes val titleRes: Int,
     data class Edit(val eventId: String) :
             EventSharedAction(R.string.edit, R.drawable.ic_edit)
 
+    data class Forward(val eventId: String, val messageContent: MessageContent) :
+            EventSharedAction(R.string.forward, R.drawable.ic_forward)
+
     data class Quote(val eventId: String) :
             EventSharedAction(R.string.quote, R.drawable.ic_quote)
 
